@@ -42,7 +42,7 @@
         name="q"
         class="form-control"
         value="{{ $q }}"
-        placeholder="Nombre o email"
+        placeholder="Nombre, email o teléfono"
       >
     </div>
     <div class="col-md-3">
@@ -75,6 +75,7 @@
         <tr>
           <th>Nombre</th>
           <th>Email</th>
+          <th>Teléfono</th>
           <th>Rol</th>
           <th>Médico vinculado</th>
           <th>Estado</th>
@@ -87,6 +88,7 @@
           <tr>
             <td class="fw-semibold">{{ $item->name }}</td>
             <td>{{ $item->email }}</td>
+            <td>{{ $item->phone ?? '-' }}</td>
             <td>
               <span class="badge text-bg-{{ $item->role === 'admin' ? 'primary' : 'info' }}">
                 {{ $item->role === 'admin' ? 'Administrador' : 'Médico' }}
@@ -113,6 +115,7 @@
             <td class="text-end">
               <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
                 <a href="{{ route('admin.users.edit', $item) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{{ route('admin.users.notify.create', $item) }}" class="btn btn-sm btn-outline-secondary">Notificar</a>
                 <a href="{{ route('admin.users.password.edit', $item) }}" class="btn btn-sm btn-outline-dark">Clave</a>
                 <form method="POST" action="{{ route('admin.users.toggle-active', $item) }}">
                   @csrf
@@ -129,7 +132,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="7" class="text-center py-4">No hay usuarios para los filtros seleccionados.</td>
+            <td colspan="8" class="text-center py-4">No hay usuarios para los filtros seleccionados.</td>
           </tr>
         @endforelse
       </tbody>

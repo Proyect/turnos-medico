@@ -29,6 +29,19 @@
         </div>
 
         <div class="col-md-6">
+          <label class="form-label">Teléfono (WhatsApp)</label>
+          <input
+            type="text"
+            name="phone"
+            class="form-control"
+            value="{{ old('phone') }}"
+            maxlength="25"
+            placeholder="+5491122334455"
+          >
+          <div class="form-text">Formato internacional E.164 para habilitar WhatsApp.</div>
+        </div>
+
+        <div class="col-md-6">
           <label class="form-label">Rol</label>
           <select name="role" id="role" class="form-select" required>
             <option value="admin" @selected(old('role') === 'admin')>Administrador</option>

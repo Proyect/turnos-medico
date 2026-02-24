@@ -40,7 +40,8 @@ class AdminUserController extends Controller
             $usersQuery->where(function ($query) use ($q): void {
                 $query
                     ->where('name', 'like', "%{$q}%")
-                    ->orWhere('email', 'like', "%{$q}%");
+                    ->orWhere('email', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%");
             });
         }
 
@@ -76,6 +77,7 @@ class AdminUserController extends Controller
         User::create([
             'name' => $data['name'],
             'email' => strtolower($data['email']),
+            'phone' => $this->normalizePhone($data['phone'] ?? null),
             'role' => $data['role'],
             'doctor_id' => $data['role'] === User::ROLE_DOCTOR ? (int) $data['doctor_id'] : null,
             'active' => $active,
@@ -133,6 +135,7 @@ class AdminUserController extends Controller
         $payload = [
             'name' => $data['name'],
             'email' => strtolower($data['email']),
+            'phone' => $this->normalizePhone($data['phone'] ?? null),
             'role' => $newRole,
             'doctor_id' => $newRole === User::ROLE_DOCTOR ? (int) $data['doctor_id'] : null,
             'active' => $newActive,
@@ -212,6 +215,7 @@ class AdminUserController extends Controller
                 'max:255',
                 Rule::unique('users', 'email')->ignore($user?->id),
             ],
+            'phone' => ['nullable', 'string', 'max:25', 'regex:/^\+[1-9]\d{6,14}$/'],
             'role' => ['required', Rule::in([User::ROLE_ADMIN, User::ROLE_DOCTOR])],
             'doctor_id' => [
                 Rule::requiredIf(fn () => $request->input('role') === User::ROLE_DOCTOR),
@@ -229,6 +233,7 @@ class AdminUserController extends Controller
 
         return $request->validate($rules, [
             'doctor_id.unique' => 'El médico seleccionado ya tiene un usuario asignado.',
+            'phone.regex' => 'El teléfono debe estar en formato internacional E.164, por ejemplo +5491122334455.',
         ]);
     }
 
@@ -239,5 +244,21 @@ class AdminUserController extends Controller
             ->where('active', true)
             ->where('id', '!=', $excluding->id)
             ->exists();
+    }
+
+    private function normalizePhone(?string $phone): ?string
+    {
+        if ($phone === null) {
+            return null;
+        }
+
+        $trimmed = trim($phone);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        $normalized = preg_replace('/[\s\-\(\)]/', '', $trimmed);
+
+        return $normalized ?: null;
     }
 }

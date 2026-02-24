@@ -6,6 +6,7 @@ use App\Http\Controllers\ReceptionController;
 use App\Http\Controllers\DoctorController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminUserController;
+use App\Http\Controllers\AdminUserNotificationController;
 
 // Pantalla de inicio
 Route::get('/', function () {
@@ -39,6 +40,8 @@ Route::prefix('/admin')->middleware('admin')->group(function () {
         Route::put('/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
         Route::get('/{user}/password', [AdminUserController::class, 'editPassword'])->name('admin.users.password.edit');
         Route::put('/{user}/password', [AdminUserController::class, 'updatePassword'])->name('admin.users.password.update');
+        Route::get('/{user}/notify', [AdminUserNotificationController::class, 'create'])->name('admin.users.notify.create');
+        Route::post('/{user}/notify', [AdminUserNotificationController::class, 'store'])->name('admin.users.notify.store');
         Route::patch('/{user}/active', [AdminUserController::class, 'toggleActive'])->name('admin.users.toggle-active');
     });
 });

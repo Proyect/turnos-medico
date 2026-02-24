@@ -44,6 +44,19 @@
         </div>
 
         <div class="col-md-6">
+          <label class="form-label">Teléfono (WhatsApp)</label>
+          <input
+            type="text"
+            name="phone"
+            class="form-control"
+            value="{{ old('phone', $user->phone) }}"
+            maxlength="25"
+            placeholder="+5491122334455"
+          >
+          <div class="form-text">Usado para notificaciones de WhatsApp en formato E.164.</div>
+        </div>
+
+        <div class="col-md-6">
           <label class="form-label">Rol</label>
           <select name="role" id="role" class="form-select" required>
             <option value="admin" @selected(old('role', $user->role) === 'admin')>Administrador</option>
@@ -83,6 +96,7 @@
 
       <div class="mt-4 d-flex gap-2">
         <button class="btn btn-primary" type="submit">Guardar cambios</button>
+        <a href="{{ route('admin.users.notify.create', $user) }}" class="btn btn-outline-secondary">Notificar</a>
         <a href="{{ route('admin.users.password.edit', $user) }}" class="btn btn-outline-dark">Resetear clave</a>
         <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Cancelar</a>
       </div>

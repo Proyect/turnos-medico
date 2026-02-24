@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'twilio_whatsapp' => [
+        'enabled' => env('TWILIO_WHATSAPP_ENABLED', false),
+        'account_sid' => env('TWILIO_ACCOUNT_SID'),
+        'auth_token' => env('TWILIO_AUTH_TOKEN'),
+        'from' => env('TWILIO_WHATSAPP_FROM'),
+        'base_url' => env('TWILIO_API_BASE_URL', 'https://api.twilio.com/2010-04-01'),
+    ],
+
 ];

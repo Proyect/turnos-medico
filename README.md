@@ -34,6 +34,7 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
    ```
    - Por defecto `.env.example` usa SQLite. Para usar MySQL, descomenta y configura `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
    - Configura `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DOCTOR_DEFAULT_PASSWORD` para los usuarios creados por seeders.
+   - Para WhatsApp configura `TWILIO_WHATSAPP_ENABLED`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`.
 
 4. Migraciones y seeders (si aplica)
    ```bash
@@ -85,6 +86,7 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
   - Permite crear, editar, activar y desactivar cuentas.
   - Incluye búsqueda por nombre/email, filtros por rol/estado y reseteo de contraseña.
   - Registra auditoría básica (creación, última edición y desactivación).
+  - Permite enviar notificaciones autenticadas por Email y WhatsApp desde `/admin/users/{id}/notify`.
 
 ## CI/CD
 
@@ -95,6 +97,7 @@ Se incluye un workflow de GitHub Actions para ejecutar pruebas en cada push/PR. 
 - Nunca subas el archivo `.env` (está ignorado por `.gitignore`).
 - Revisa y personaliza `.env.example` para documentar variables necesarias sin exponer secretos.
 - Cambia siempre las credenciales de seeders (`ADMIN_PASSWORD`, `DOCTOR_DEFAULT_PASSWORD`) fuera de entornos de desarrollo.
+- Nunca expongas `TWILIO_AUTH_TOKEN` ni credenciales SMTP en el repositorio.
 
 ## Licencia
 
