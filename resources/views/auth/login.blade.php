@@ -24,9 +24,9 @@
             <input type="password" name="password" class="form-control" required>
             <div class="form-text">
               @if($role==='admin')
-                Usar la variable .env ADMIN_PASS (por defecto: admin123)
+                Definir la variable ADMIN_PASS en el archivo .env
               @else
-                Usar la variable .env DOCTOR_PASS (por defecto: doctor123)
+                Definir la variable DOCTOR_PASS en el archivo .env
               @endif
             </div>
           </div>
