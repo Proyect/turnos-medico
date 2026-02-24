@@ -33,12 +33,11 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
    php artisan key:generate
    ```
    - Por defecto `.env.example` usa SQLite. Para usar MySQL, descomenta y configura `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
-   - Configura también `ADMIN_PASS` y `DOCTOR_PASS` para habilitar los accesos por rol.
+   - Configura `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DOCTOR_DEFAULT_PASSWORD` para los usuarios creados por seeders.
 
 4. Migraciones y seeders (si aplica)
    ```bash
-   php artisan migrate
-   # php artisan db:seed   # si definiste seeders
+   php artisan migrate --seed
    ```
 
 5. Compilar assets y servir
@@ -73,6 +72,15 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
   - Asistencia: solo desde estado `requested`.
   - Pago: solo desde `requested` o `arrived`.
 
+## Accesos iniciales (seeders)
+
+- Se crea un usuario administrador con:
+  - Email: `ADMIN_EMAIL`
+  - Clave: `ADMIN_PASSWORD`
+- Se crea un usuario por cada médico activo con:
+  - Clave: `DOCTOR_DEFAULT_PASSWORD`
+  - Selección por médico en `/login/medico`
+
 ## CI/CD
 
 Se incluye un workflow de GitHub Actions para ejecutar pruebas en cada push/PR. Ver `.github/workflows/laravel-ci.yml`.
@@ -81,7 +89,7 @@ Se incluye un workflow de GitHub Actions para ejecutar pruebas en cada push/PR. 
 
 - Nunca subas el archivo `.env` (está ignorado por `.gitignore`).
 - Revisa y personaliza `.env.example` para documentar variables necesarias sin exponer secretos.
-- Las credenciales `ADMIN_PASS` y `DOCTOR_PASS` no tienen valor por defecto: deben definirse explícitamente en cada entorno.
+- Cambia siempre las credenciales de seeders (`ADMIN_PASSWORD`, `DOCTOR_DEFAULT_PASSWORD`) fuera de entornos de desarrollo.
 
 ## Licencia
 

@@ -15,7 +15,7 @@
       <ul class="small ps-3 mb-0">
         <li class="mb-2">Sesión segura con regeneración de credenciales de sesión.</li>
         <li class="mb-2">Control de intentos para prevenir fuerza bruta.</li>
-        <li>Usa credenciales definidas en variables de entorno.</li>
+        <li>Usá credenciales de usuario registradas en base de datos.</li>
       </ul>
     </div>
   </div>
@@ -25,15 +25,29 @@
       <div class="card-body p-4">
         <form method="POST" action="{{ route('login.perform', $role) }}">
           @csrf
+          @if($role === 'admin')
+            <div class="mb-3">
+              <label class="form-label">Email</label>
+              <input
+                type="email"
+                name="email"
+                class="form-control"
+                value="{{ old('email') }}"
+                autocomplete="email"
+                required
+              >
+            </div>
+          @endif
           @if($role === 'medico')
             <div class="mb-3">
               <label class="form-label">Médico</label>
               <select name="doctor_id" class="form-select" required>
                 <option value="">Seleccione...</option>
                 @foreach($doctors as $d)
-                  <option value="{{ $d->id }}">{{ $d->name }}</option>
+                  <option value="{{ $d->id }}" @selected((int) old('doctor_id') === $d->id)>{{ $d->name }}</option>
                 @endforeach
               </select>
+              <div class="form-text">Seleccioná tu usuario médico asignado.</div>
             </div>
           @endif
           <div class="mb-3">
@@ -41,9 +55,9 @@
             <input type="password" name="password" class="form-control" required>
             <div class="form-text">
               @if($role==='admin')
-                Definir la variable ADMIN_PASS en el archivo .env.
+                Usá la clave del usuario administrador.
               @else
-                Definir la variable DOCTOR_PASS en el archivo .env.
+                Usá la clave del usuario médico.
               @endif
             </div>
           </div>

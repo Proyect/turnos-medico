@@ -3,17 +3,37 @@
 namespace App\Http\Controllers;
 
 use App\Models\Doctor;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class AuthController extends Controller
 {
-    public function showLogin(string $role): View
+    public function showLogin(Request $request, string $role): View|RedirectResponse
     {
         abort_unless(in_array($role, ['admin', 'medico']), 404);
+
+        if (Auth::check()) {
+            $user = Auth::user();
+
+            if ($user?->isAdmin()) {
+                return redirect()->route('reception.index');
+            }
+
+            if ($user?->isDoctor()) {
+                return redirect()->route('doctor.index');
+            }
+
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+        }
+
         $doctors = collect();
         if ($role === 'medico') {
             $doctors = Doctor::where('active', true)->orderBy('name')->get(['id','name']);
@@ -37,32 +57,32 @@ class AuthController extends Controller
         }
 
         if ($role === 'admin') {
-            $request->validate(['password' => ['required','string']]);
-            $pass = $request->input('password');
-            $expected = (string) config('auth.role_passwords.admin', '');
+            $credentials = $request->validate([
+                'email' => ['required', 'email', 'max:255'],
+                'password' => ['required', 'string'],
+            ]);
 
-            if ($expected === '') {
-                return back()->withErrors([
-                    'auth' => 'El acceso de Administrador no está configurado. Define ADMIN_PASS en .env.',
-                ]);
-            }
+            $user = User::query()
+                ->where('role', User::ROLE_ADMIN)
+                ->whereRaw('LOWER(email) = ?', [strtolower($credentials['email'])])
+                ->first();
 
-            if (!hash_equals($expected, (string) $pass)) {
+            if (!$user || !Hash::check($credentials['password'], $user->password)) {
                 RateLimiter::hit($throttleKey, $decaySeconds);
 
                 return back()
-                    ->withErrors(['password' => 'Clave incorrecta'])
+                    ->withErrors(['auth' => 'Credenciales inválidas.'])
                     ->withInput($request->except('password'));
             }
 
-            $this->startRoleSession($request, ['role' => 'admin']);
+            Auth::login($user);
+            $request->session()->regenerate();
             RateLimiter::clear($throttleKey);
 
             return redirect()->route('reception.index')->with('success', 'Sesión iniciada como Administrador.');
         }
 
-        // Médico
-        $request->validate([
+        $credentials = $request->validate([
             'password' => ['required','string'],
             'doctor_id' => [
                 'required',
@@ -70,39 +90,27 @@ class AuthController extends Controller
             ],
         ]);
 
-        $pass = $request->input('password');
-        $expected = (string) config('auth.role_passwords.doctor', '');
+        $user = User::query()
+            ->where('role', User::ROLE_DOCTOR)
+            ->where('doctor_id', (int) $credentials['doctor_id'])
+            ->with('doctor:id,name,active')
+            ->first();
 
-        if ($expected === '') {
-            return back()->withErrors([
-                'auth' => 'El acceso de Médico no está configurado. Define DOCTOR_PASS en .env.',
-            ]);
-        }
-
-        if (!hash_equals($expected, (string) $pass)) {
+        if (
+            !$user
+            || !$user->doctor
+            || !$user->doctor->active
+            || !Hash::check($credentials['password'], $user->password)
+        ) {
             RateLimiter::hit($throttleKey, $decaySeconds);
 
             return back()
-                ->withErrors(['password' => 'Clave incorrecta'])
+                ->withErrors(['auth' => 'Credenciales inválidas.'])
                 ->withInput($request->except('password'));
         }
 
-        $doctor = Doctor::query()
-            ->whereKey((int) $request->doctor_id)
-            ->where('active', true)
-            ->first();
-
-        if (!$doctor) {
-            return back()
-                ->withErrors(['doctor_id' => 'El médico seleccionado ya no está disponible.'])
-                ->withInput($request->except('password'));
-        }
-
-        $this->startRoleSession($request, [
-            'role' => 'doctor',
-            'doctor_id' => $doctor->id,
-            'doctor_name' => $doctor->name,
-        ]);
+        Auth::login($user);
+        $request->session()->regenerate();
         RateLimiter::clear($throttleKey);
 
         return redirect()->route('doctor.index')->with('success', 'Sesión iniciada como Médico.');
@@ -110,20 +118,18 @@ class AuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
+        Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/paciente')->with('success', 'Sesión cerrada.');
     }
 
-    private function startRoleSession(Request $request, array $sessionData): void
-    {
-        $request->session()->regenerate();
-        $request->session()->forget(['role', 'doctor_id', 'doctor_name']);
-        $request->session()->put($sessionData);
-    }
-
     private function throttleKey(Request $request, string $role): string
     {
-        return sprintf('role-login:%s:%s', $role, $request->ip());
+        $identifier = $role === 'admin'
+            ? strtolower((string) $request->input('email', ''))
+            : (string) $request->input('doctor_id', '');
+
+        return sprintf('role-login:%s:%s:%s', $role, $identifier, $request->ip());
     }
 }

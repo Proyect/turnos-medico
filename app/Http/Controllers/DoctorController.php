@@ -11,21 +11,9 @@ class DoctorController extends Controller
 {
     public function index(Request $request): View
     {
-        // Filtrar por fecha y doctor. Si hay sesión de médico, forzar su ID.
         $date = $request->query('date', now()->toDateString());
-        $doctorId = $request->query('doctor_id');
-        $sessionDoctorId = session('role') === 'doctor' ? session('doctor_id') : null;
-
-        if ($sessionDoctorId) {
-            // Si está logueado como médico, limitar al propio médico
-            $doctors = Doctor::with('specialty')->where('id', $sessionDoctorId)->get();
-            $doctorId = $sessionDoctorId; // forzar el filtro
-        } else {
-            $doctors = Doctor::with('specialty')->where('active', true)->orderBy('name')->get();
-            if (!$doctorId && $doctors->count() > 0) {
-                $doctorId = $doctors->first()->id;
-            }
-        }
+        $doctorId = (int) ($request->user()?->doctor_id ?? 0);
+        $doctors = Doctor::with('specialty')->where('id', $doctorId)->get();
 
         $appointments = collect();
         if ($doctorId) {

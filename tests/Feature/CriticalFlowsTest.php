@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Specialty;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Tests\TestCase;
@@ -178,8 +179,9 @@ class CriticalFlowsTest extends TestCase
     public function test_reception_cannot_mark_arrived_if_status_is_not_requested(): void
     {
         $appointment = $this->createAppointmentWithStatus('paid');
+        $admin = $this->createAdminUser('admin.recepcion@example.com');
 
-        $response = $this->withSession(['role' => 'admin'])
+        $response = $this->actingAs($admin)
             ->post(route('reception.arrived', $appointment));
 
         $response->assertSessionHasErrors('status');
@@ -189,8 +191,9 @@ class CriticalFlowsTest extends TestCase
     public function test_reception_cannot_mark_paid_when_status_is_completed(): void
     {
         $appointment = $this->createAppointmentWithStatus('completed');
+        $admin = $this->createAdminUser('admin.recepcion2@example.com');
 
-        $response = $this->withSession(['role' => 'admin'])
+        $response = $this->actingAs($admin)
             ->post(route('reception.paid', $appointment));
 
         $response->assertSessionHasErrors('status');
@@ -199,16 +202,21 @@ class CriticalFlowsTest extends TestCase
 
     public function test_login_medico_requires_active_doctor(): void
     {
-        RateLimiter::clear('role-login:medico:127.0.0.1');
-
         $specialty = Specialty::create(['name' => 'Neurologia']);
         $inactiveDoctor = Doctor::create([
             'name' => 'Dr. Inactivo',
             'specialty_id' => $specialty->id,
             'active' => false,
         ]);
+        RateLimiter::clear("role-login:medico:{$inactiveDoctor->id}:127.0.0.1");
 
-        config()->set('auth.role_passwords.doctor', 'secret');
+        User::create([
+            'name' => 'Usuario Medico Inactivo',
+            'email' => 'inactivo.medico@example.com',
+            'role' => User::ROLE_DOCTOR,
+            'doctor_id' => $inactiveDoctor->id,
+            'password' => 'secret',
+        ]);
 
         $response = $this->post(route('login.perform', 'medico'), [
             'doctor_id' => $inactiveDoctor->id,
@@ -218,18 +226,23 @@ class CriticalFlowsTest extends TestCase
         $response->assertSessionHasErrors('doctor_id');
     }
 
-    public function test_login_medico_stores_doctor_name_in_session(): void
+    public function test_login_medico_with_valid_credentials_authenticates_user(): void
     {
-        RateLimiter::clear('role-login:medico:127.0.0.1');
-
         $specialty = Specialty::create(['name' => 'Clinica']);
         $doctor = Doctor::create([
             'name' => 'Dra. Sesion Nombre',
             'specialty_id' => $specialty->id,
             'active' => true,
         ]);
+        RateLimiter::clear("role-login:medico:{$doctor->id}:127.0.0.1");
 
-        config()->set('auth.role_passwords.doctor', 'secret');
+        $user = User::create([
+            'name' => $doctor->name,
+            'email' => 'sesion.medico@example.com',
+            'role' => User::ROLE_DOCTOR,
+            'doctor_id' => $doctor->id,
+            'password' => 'secret',
+        ]);
 
         $response = $this->post(route('login.perform', 'medico'), [
             'doctor_id' => $doctor->id,
@@ -237,22 +250,47 @@ class CriticalFlowsTest extends TestCase
         ]);
 
         $response->assertRedirect(route('doctor.index'));
-        $response->assertSessionHas('role', 'doctor');
-        $response->assertSessionHas('doctor_id', $doctor->id);
-        $response->assertSessionHas('doctor_name', $doctor->name);
+        $this->assertAuthenticatedAs($user);
     }
 
-    public function test_login_admin_fails_when_password_is_not_configured(): void
+    public function test_login_admin_fails_with_invalid_credentials(): void
     {
-        RateLimiter::clear('role-login:admin:127.0.0.1');
-
-        config()->set('auth.role_passwords.admin', '');
+        $admin = User::create([
+            'name' => 'Admin Principal',
+            'email' => 'admin@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'password' => 'admin-secret',
+        ]);
+        RateLimiter::clear("role-login:admin:{$admin->email}:127.0.0.1");
 
         $response = $this->post(route('login.perform', 'admin'), [
-            'password' => 'secret',
+            'email' => 'admin@example.com',
+            'password' => 'incorrecta',
         ]);
 
         $response->assertSessionHasErrors('auth');
+        $this->assertGuest();
+    }
+
+    public function test_login_admin_with_valid_credentials_authenticates_user(): void
+    {
+        $admin = User::create([
+            'name' => 'Admin Principal',
+            'email' => 'admin@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'password' => 'admin-secret',
+        ]);
+        RateLimiter::clear("role-login:admin:{$admin->email}:127.0.0.1");
+
+        $response = $this->post(route('login.perform', 'admin'), [
+            'email' => 'admin@example.com',
+            'password' => 'admin-secret',
+        ]);
+
+        $response->assertRedirect(route('reception.index'));
+        $this->assertAuthenticatedAs($admin);
     }
 
     private function createAppointmentWithStatus(string $status): Appointment
@@ -273,6 +311,17 @@ class CriticalFlowsTest extends TestCase
             'doctor_id' => $doctor->id,
             'scheduled_at' => now()->addDay()->setTime(12, 0, 0),
             'status' => $status,
+        ]);
+    }
+
+    private function createAdminUser(string $email): User
+    {
+        return User::create([
+            'name' => 'Admin',
+            'email' => $email,
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'password' => 'admin-secret',
         ]);
     }
 }

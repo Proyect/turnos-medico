@@ -1,6 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
+@php($authUser = auth()->user())
 <section class="app-hero p-4 p-lg-5 mb-4">
   <div class="row align-items-center g-4">
     <div class="col-lg-8">
@@ -33,7 +34,7 @@
         <span class="service-icon">A</span>
         <h5 class="card-title">Administrador</h5>
         <p class="card-text muted-help">Consultá el listado del día y registrá asistencia y pagos desde el panel de recepción.</p>
-        @if(session('role')==='admin')
+        @if($authUser && $authUser->isAdmin())
           <a href="/admin" class="btn btn-success mt-auto">Ir al Panel</a>
         @else
           <a href="/login/admin" class="btn btn-outline-primary mt-auto">Iniciar sesión</a>
@@ -47,7 +48,7 @@
         <span class="service-icon">M</span>
         <h5 class="card-title">Médico</h5>
         <p class="card-text muted-help">Visualizá tus pacientes del día con prioridad para turnos ya abonados.</p>
-        @if(session('role')==='doctor')
+        @if($authUser && $authUser->isDoctor())
           <a href="/medico" class="btn btn-success mt-auto">Ir al Panel</a>
         @else
           <a href="/login/medico" class="btn btn-outline-primary mt-auto">Iniciar sesión</a>

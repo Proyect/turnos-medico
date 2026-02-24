@@ -8,6 +8,7 @@
     <link href="{{ asset('css/clinic-ui.css') }}" rel="stylesheet">
 </head>
 <body class="app-body">
+@php($authUser = auth()->user())
 <nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-4">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="/">
@@ -33,17 +34,17 @@
         </li>
       </ul>
       <ul class="navbar-nav ms-auto">
-        @if(session('role')==='admin')
-          <li class="nav-item"><span class="navbar-text me-2">Conectado: Admin</span></li>
+        @if($authUser && $authUser->isAdmin())
+          <li class="nav-item"><span class="navbar-text me-2">Conectado: {{ $authUser->name }}</span></li>
           <li class="nav-item">
             <form method="POST" action="{{ route('logout') }}">
               @csrf
               <button class="btn btn-sm btn-light" type="submit">Cerrar sesión</button>
             </form>
           </li>
-        @elseif(session('role')==='doctor')
+        @elseif($authUser && $authUser->isDoctor())
           <li class="nav-item">
-            <span class="navbar-text me-2">Conectado: {{ session('doctor_name', 'Médico #'.session('doctor_id')) }}</span>
+            <span class="navbar-text me-2">Conectado: {{ $authUser->doctor?->name ?? $authUser->name }}</span>
           </li>
           <li class="nav-item">
             <form method="POST" action="{{ route('logout') }}">

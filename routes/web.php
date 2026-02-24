@@ -22,7 +22,7 @@ Route::get('/api/specialties/{specialty}/doctors', [AppointmentController::class
 // Auth (login/logout) para admin y médico
 Route::get('/login/{role}', [AuthController::class, 'showLogin'])->name('login.show');
 Route::post('/login/{role}', [AuthController::class, 'login'])->name('login.perform');
-Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth')->name('logout');
 
 // Administrador/Recepción: listar por fecha, marcar llegada y pago
 Route::prefix('/admin')->middleware('admin')->group(function () {

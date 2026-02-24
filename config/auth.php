@@ -101,26 +101,11 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Role Access Passwords (temporary auth model)
+    | Login Rate Limits
     |--------------------------------------------------------------------------
     |
-    | Mientras no se migre a usuarios reales, se utilizan contraseñas por rol.
-    | Deben definirse en .env y no tienen valores por defecto por seguridad.
-    |
-    */
-
-    'role_passwords' => [
-        'admin' => env('ADMIN_PASS'),
-        'doctor' => env('DOCTOR_PASS'),
-    ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Role Login Rate Limits
-    |--------------------------------------------------------------------------
-    |
-    | Limita intentos fallidos de login por rol + IP para reducir ataques de
-    | fuerza bruta en el modelo de autenticación temporal.
+    | Limita intentos fallidos por tipo de acceso + identificador + IP para
+    | reducir ataques de fuerza bruta sobre formularios de autenticación.
     |
     */
 
