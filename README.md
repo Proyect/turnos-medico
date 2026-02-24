@@ -83,6 +83,8 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
 - Gestión de usuarios desde UI:
   - Ruta: `/admin/users` (solo administradores)
   - Permite crear, editar, activar y desactivar cuentas.
+  - Incluye búsqueda por nombre/email, filtros por rol/estado y reseteo de contraseña.
+  - Registra auditoría básica (creación, última edición y desactivación).
 
 ## CI/CD
 

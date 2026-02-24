@@ -35,7 +35,17 @@
 
 <div class="toolbar-card mb-3">
   <form method="GET" action="{{ route('admin.users.index') }}" class="row g-2 align-items-end">
-    <div class="col-md-4">
+    <div class="col-md-3">
+      <label class="form-label mb-1">Buscar</label>
+      <input
+        type="text"
+        name="q"
+        class="form-control"
+        value="{{ $q }}"
+        placeholder="Nombre o email"
+      >
+    </div>
+    <div class="col-md-3">
       <label class="form-label mb-1">Rol</label>
       <select name="role" class="form-select">
         <option value="">Todos</option>
@@ -43,7 +53,7 @@
         <option value="doctor" @selected($role === 'doctor')>Médico</option>
       </select>
     </div>
-    <div class="col-md-4">
+    <div class="col-md-3">
       <label class="form-label mb-1">Estado</label>
       <select name="status" class="form-select">
         <option value="all" @selected($status === 'all')>Todos</option>
@@ -51,7 +61,7 @@
         <option value="inactive" @selected($status === 'inactive')>Inactivos</option>
       </select>
     </div>
-    <div class="col-md-4 d-flex gap-2">
+    <div class="col-md-3 d-flex gap-2">
       <button class="btn btn-primary" type="submit">Filtrar</button>
       <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Limpiar</a>
     </div>
@@ -68,6 +78,7 @@
           <th>Rol</th>
           <th>Médico vinculado</th>
           <th>Estado</th>
+          <th>Auditoría</th>
           <th class="text-end">Acciones</th>
         </tr>
       </thead>
@@ -87,9 +98,22 @@
                 {{ $item->active ? 'Activo' : 'Inactivo' }}
               </span>
             </td>
+            <td class="small">
+              <div><span class="text-secondary">Creó:</span> {{ $item->creator?->name ?? 'Sistema' }}</div>
+              <div><span class="text-secondary">Editó:</span> {{ $item->updater?->name ?? '-' }}</div>
+              @if($item->deactivated_at)
+                <div>
+                  <span class="text-secondary">Desactivó:</span> {{ $item->deactivator?->name ?? '-' }}
+                </div>
+                <div>
+                  <span class="text-secondary">Fecha:</span> {{ $item->deactivated_at->format('d/m/Y H:i') }}
+                </div>
+              @endif
+            </td>
             <td class="text-end">
-              <div class="d-inline-flex gap-2">
+              <div class="d-inline-flex gap-2 flex-wrap justify-content-end">
                 <a href="{{ route('admin.users.edit', $item) }}" class="btn btn-sm btn-outline-primary">Editar</a>
+                <a href="{{ route('admin.users.password.edit', $item) }}" class="btn btn-sm btn-outline-dark">Clave</a>
                 <form method="POST" action="{{ route('admin.users.toggle-active', $item) }}">
                   @csrf
                   @method('PATCH')
@@ -105,7 +129,7 @@
           </tr>
         @empty
           <tr>
-            <td colspan="6" class="text-center py-4">No hay usuarios para los filtros seleccionados.</td>
+            <td colspan="7" class="text-center py-4">No hay usuarios para los filtros seleccionados.</td>
           </tr>
         @endforelse
       </tbody>

@@ -64,16 +64,6 @@
           <div class="form-text">Si el rol es médico, este campo es obligatorio.</div>
         </div>
 
-        <div class="col-md-6">
-          <label class="form-label">Nueva clave (opcional)</label>
-          <input type="password" name="password" class="form-control" minlength="8">
-        </div>
-
-        <div class="col-md-6">
-          <label class="form-label">Confirmar nueva clave</label>
-          <input type="password" name="password_confirmation" class="form-control" minlength="8">
-        </div>
-
         <div class="col-12">
           <input type="hidden" name="active" value="0">
           <div class="form-check form-switch">
@@ -93,6 +83,7 @@
 
       <div class="mt-4 d-flex gap-2">
         <button class="btn btn-primary" type="submit">Guardar cambios</button>
+        <a href="{{ route('admin.users.password.edit', $user) }}" class="btn btn-outline-dark">Resetear clave</a>
         <a href="{{ route('admin.users.index') }}" class="btn btn-outline-secondary">Cancelar</a>
       </div>
     </form>

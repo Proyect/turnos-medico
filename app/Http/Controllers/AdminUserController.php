@@ -15,9 +15,15 @@ class AdminUserController extends Controller
     {
         $role = $request->query('role');
         $status = $request->query('status', 'all');
+        $q = trim((string) $request->query('q', ''));
 
         $usersQuery = User::query()
-            ->with('doctor:id,name')
+            ->with([
+                'doctor:id,name',
+                'creator:id,name',
+                'updater:id,name',
+                'deactivator:id,name',
+            ])
             ->orderBy('name');
 
         if (in_array($role, [User::ROLE_ADMIN, User::ROLE_DOCTOR], true)) {
@@ -30,6 +36,14 @@ class AdminUserController extends Controller
             $usersQuery->where('active', false);
         }
 
+        if ($q !== '') {
+            $usersQuery->where(function ($query) use ($q): void {
+                $query
+                    ->where('name', 'like', "%{$q}%")
+                    ->orWhere('email', 'like', "%{$q}%");
+            });
+        }
+
         $users = $usersQuery->paginate(15)->withQueryString();
 
         $stats = [
@@ -39,7 +53,7 @@ class AdminUserController extends Controller
             'doctors' => User::query()->where('role', User::ROLE_DOCTOR)->count(),
         ];
 
-        return view('admin.users.index', compact('users', 'stats', 'role', 'status'));
+        return view('admin.users.index', compact('users', 'stats', 'role', 'status', 'q'));
     }
 
     public function create(): View
@@ -56,13 +70,19 @@ class AdminUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $data = $this->validatePayload($request);
+        $actorId = (int) $request->user()->id;
+        $active = (bool) ($data['active'] ?? true);
 
         User::create([
             'name' => $data['name'],
             'email' => strtolower($data['email']),
             'role' => $data['role'],
             'doctor_id' => $data['role'] === User::ROLE_DOCTOR ? (int) $data['doctor_id'] : null,
-            'active' => (bool) ($data['active'] ?? true),
+            'active' => $active,
+            'created_by' => $actorId,
+            'updated_by' => $actorId,
+            'deactivated_by' => $active ? null : $actorId,
+            'deactivated_at' => $active ? null : now(),
             'password' => $data['password'],
         ]);
 
@@ -91,6 +111,7 @@ class AdminUserController extends Controller
         $data = $this->validatePayload($request, $user);
         $newRole = $data['role'];
         $newActive = (bool) ($data['active'] ?? true);
+        $actorId = (int) $request->user()->id;
         $isSelf = (int) $request->user()->id === (int) $user->id;
 
         if ($isSelf && (!$newActive || $newRole !== User::ROLE_ADMIN)) {
@@ -115,10 +136,15 @@ class AdminUserController extends Controller
             'role' => $newRole,
             'doctor_id' => $newRole === User::ROLE_DOCTOR ? (int) $data['doctor_id'] : null,
             'active' => $newActive,
+            'updated_by' => $actorId,
         ];
 
-        if (!empty($data['password'])) {
-            $payload['password'] = $data['password'];
+        if ($user->active && !$newActive) {
+            $payload['deactivated_by'] = $actorId;
+            $payload['deactivated_at'] = now();
+        } elseif (!$user->active && $newActive) {
+            $payload['deactivated_by'] = null;
+            $payload['deactivated_at'] = null;
         }
 
         $user->update($payload);
@@ -131,6 +157,7 @@ class AdminUserController extends Controller
     public function toggleActive(Request $request, User $user): RedirectResponse
     {
         $isSelf = (int) $request->user()->id === (int) $user->id;
+        $actorId = (int) $request->user()->id;
         if ($isSelf) {
             return back()->withErrors(['auth' => 'No puedes desactivar tu propio usuario.']);
         }
@@ -140,18 +167,44 @@ class AdminUserController extends Controller
             return back()->withErrors(['auth' => 'Debe existir al menos un administrador activo en el sistema.']);
         }
 
-        $user->update(['active' => $newActive]);
+        $user->update([
+            'active' => $newActive,
+            'updated_by' => $actorId,
+            'deactivated_by' => $newActive ? null : $actorId,
+            'deactivated_at' => $newActive ? null : now(),
+        ]);
 
         $message = $newActive ? 'Usuario activado correctamente.' : 'Usuario desactivado correctamente.';
 
         return back()->with('success', $message);
     }
 
+    public function editPassword(User $user): View
+    {
+        return view('admin.users.password', compact('user'));
+    }
+
+    public function updatePassword(Request $request, User $user): RedirectResponse
+    {
+        $data = $request->validate([
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user->update([
+            'password' => $data['password'],
+            'updated_by' => (int) $request->user()->id,
+        ]);
+
+        return redirect()
+            ->route('admin.users.edit', $user)
+            ->with('success', 'La contraseña del usuario fue actualizada.');
+    }
+
     private function validatePayload(Request $request, ?User $user = null): array
     {
         $isCreate = $user === null;
 
-        return $request->validate([
+        $rules = [
             'name' => ['required', 'string', 'max:100'],
             'email' => [
                 'required',
@@ -168,8 +221,13 @@ class AdminUserController extends Controller
                 Rule::unique('users', 'doctor_id')->ignore($user?->id),
             ],
             'active' => ['sometimes', 'boolean'],
-            'password' => [$isCreate ? 'required' : 'nullable', 'string', 'min:8', 'confirmed'],
-        ], [
+        ];
+
+        if ($isCreate) {
+            $rules['password'] = ['required', 'string', 'min:8', 'confirmed'];
+        }
+
+        return $request->validate($rules, [
             'doctor_id.unique' => 'El médico seleccionado ya tiene un usuario asignado.',
         ]);
     }

@@ -37,6 +37,8 @@ Route::prefix('/admin')->middleware('admin')->group(function () {
         Route::post('/', [AdminUserController::class, 'store'])->name('admin.users.store');
         Route::get('/{user}/edit', [AdminUserController::class, 'edit'])->name('admin.users.edit');
         Route::put('/{user}', [AdminUserController::class, 'update'])->name('admin.users.update');
+        Route::get('/{user}/password', [AdminUserController::class, 'editPassword'])->name('admin.users.password.edit');
+        Route::put('/{user}/password', [AdminUserController::class, 'updatePassword'])->name('admin.users.password.update');
         Route::patch('/{user}/active', [AdminUserController::class, 'toggleActive'])->name('admin.users.toggle-active');
     });
 });

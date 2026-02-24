@@ -27,6 +27,10 @@ class User extends Authenticatable
         'role',
         'doctor_id',
         'active',
+        'created_by',
+        'updated_by',
+        'deactivated_by',
+        'deactivated_at',
         'password',
     ];
 
@@ -50,6 +54,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'active' => 'boolean',
+            'deactivated_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -57,6 +62,21 @@ class User extends Authenticatable
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'updated_by');
+    }
+
+    public function deactivator(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'deactivated_by');
     }
 
     public function isAdmin(): bool

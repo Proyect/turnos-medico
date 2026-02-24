@@ -6,6 +6,7 @@ use App\Models\Doctor;
 use App\Models\Specialty;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
 class UserManagementTest extends TestCase
@@ -30,6 +31,8 @@ class UserManagementTest extends TestCase
             'email' => 'coord@example.com',
             'role' => User::ROLE_ADMIN,
             'active' => true,
+            'created_by' => $admin->id,
+            'updated_by' => $admin->id,
         ]);
     }
 
@@ -103,6 +106,78 @@ class UserManagementTest extends TestCase
 
         $response->assertSessionHasErrors('auth');
         $this->assertTrue((bool) $admin->fresh()->active);
+    }
+
+    public function test_admin_can_search_users_by_name_or_email(): void
+    {
+        $admin = $this->createAdminUser('owner@example.com');
+        User::create([
+            'name' => 'Lucia Recepcion',
+            'email' => 'lucia@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'active' => true,
+            'password' => 'super-segura',
+        ]);
+        User::create([
+            'name' => 'Carlos Medico',
+            'email' => 'carlos@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'active' => true,
+            'password' => 'super-segura',
+        ]);
+
+        $response = $this->actingAs($admin)->get(route('admin.users.index', ['q' => 'lucia']));
+
+        $response->assertStatus(200);
+        $response->assertSee('Lucia Recepcion');
+        $response->assertDontSee('Carlos Medico');
+    }
+
+    public function test_admin_can_reset_user_password(): void
+    {
+        $admin = $this->createAdminUser('owner@example.com');
+        $user = User::create([
+            'name' => 'Usuario Reset',
+            'email' => 'reset@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'active' => true,
+            'password' => 'clave-anterior',
+        ]);
+
+        $response = $this->actingAs($admin)->put(route('admin.users.password.update', $user), [
+            'password' => 'nueva-clave-segura',
+            'password_confirmation' => 'nueva-clave-segura',
+        ]);
+
+        $response->assertRedirect(route('admin.users.edit', $user));
+        $this->assertTrue(Hash::check('nueva-clave-segura', (string) $user->fresh()->password));
+        $this->assertSame($admin->id, $user->fresh()->updated_by);
+    }
+
+    public function test_toggle_active_registers_deactivation_audit(): void
+    {
+        $admin = $this->createAdminUser('owner@example.com');
+        $target = User::create([
+            'name' => 'Target',
+            'email' => 'target@example.com',
+            'role' => User::ROLE_ADMIN,
+            'doctor_id' => null,
+            'active' => true,
+            'password' => 'super-segura',
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->patch(route('admin.users.toggle-active', $target));
+
+        $response->assertSessionHasNoErrors();
+        $target->refresh();
+        $this->assertFalse($target->active);
+        $this->assertSame($admin->id, $target->updated_by);
+        $this->assertSame($admin->id, $target->deactivated_by);
+        $this->assertNotNull($target->deactivated_at);
     }
 
     private function createAdminUser(string $email): User
