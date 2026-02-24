@@ -61,6 +61,7 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
 - Middlewares: `app/Http/Middleware/`
 - Vistas Blade: `resources/views/`
 - Migraciones: `database/migrations/`
+- Manual operativo WhatsApp/Email automatico: `docs/MANUAL_NOTIFICACIONES_WHATSAPP_AUTOMATICAS.md`
 
 ## Reglas funcionales vigentes
 
