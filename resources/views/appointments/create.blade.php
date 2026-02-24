@@ -1,11 +1,24 @@
 @extends('layouts.app')
 
 @section('content')
+<div class="toolbar-card mb-4">
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+    <div>
+      <h5 class="mb-1">Solicitud de turno</h5>
+      <p class="mb-0 muted-help">Seleccioná especialidad, médico y horario. Los turnos se reservan cada 15 minutos.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+      <a href="/admin" class="btn btn-soft btn-sm">Recepción</a>
+      <a href="/medico" class="btn btn-soft btn-sm">Panel Médico</a>
+    </div>
+  </div>
+</div>
+
 <div class="row">
   <div class="col-12 col-lg-8 mx-auto">
-    <div class="card">
+    <div class="card panel-card">
       <div class="card-header">Solicitar turno</div>
-      <div class="card-body">
+      <div class="card-body p-4">
         <form method="POST" action="{{ route('appointments.store') }}" id="turno-form">
           @csrf
           <div class="row g-3">
@@ -105,8 +118,7 @@
 
           <div class="mt-4 d-flex gap-2">
             <button type="submit" class="btn btn-primary">Reservar turno</button>
-            <a href="/admin" class="btn btn-outline-secondary">Ir a Administrador</a>
-            <a href="/medico" class="btn btn-outline-secondary">Ir a Médico</a>
+            <a href="/" class="btn btn-outline-secondary">Volver al inicio</a>
           </div>
         </form>
       </div>
