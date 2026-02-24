@@ -60,6 +60,19 @@
                 autocomplete="tel"
                 required
               >
+              <div class="form-text">Para WhatsApp, usar prefijo internacional (ejemplo: +5491122334455).</div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Email (opcional)</label>
+              <input
+                type="email"
+                name="patient_email"
+                class="form-control"
+                value="{{ old('patient_email') }}"
+                maxlength="255"
+                placeholder="paciente@email.com"
+                autocomplete="email"
+              >
             </div>
             <div class="col-md-6">
               <label class="form-label">DNI</label>

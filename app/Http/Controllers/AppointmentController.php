@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Specialty;
+use App\Services\Notifications\AppointmentNotificationService;
 use Carbon\Carbon;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
@@ -19,7 +20,7 @@ class AppointmentController extends Controller
         return view('appointments.create', compact('specialties'));
     }
 
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request, AppointmentNotificationService $notificationService): RedirectResponse
     {
         $this->normalizeInputForValidation($request);
 
@@ -27,6 +28,7 @@ class AppointmentController extends Controller
             'patient_first_name' => ['required', 'string', 'max:100', 'regex:/^[\pL\s\'-]+$/u'],
             'patient_last_name'  => ['required', 'string', 'max:100', 'regex:/^[\pL\s\'-]+$/u'],
             'phone'              => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'],
+            'patient_email'      => ['nullable', 'email', 'max:255'],
             'dni'                => ['required', 'string', 'regex:/^\d{7,10}$/'],
             'specialty_id'       => ['required','exists:specialties,id'],
             'doctor_id'          => ['required','exists:doctors,id'],
@@ -82,10 +84,11 @@ class AppointmentController extends Controller
 
         // Crear el turno y manejar posible conflicto por índice único a nivel BD
         try {
-            Appointment::create([
+            $appointment = Appointment::create([
                 'patient_first_name' => $data['patient_first_name'],
                 'patient_last_name'  => $data['patient_last_name'],
                 'phone'              => $data['phone'],
+                'patient_email'      => $data['patient_email'] ?? null,
                 'dni'                => $data['dni'],
                 'specialty_id'       => $data['specialty_id'],
                 'doctor_id'          => $doctor->id,
@@ -104,6 +107,12 @@ class AppointmentController extends Controller
             return back()
                 ->withErrors(['time' => 'No se pudo crear el turno: el horario ya fue reservado.'])
                 ->withInput();
+        }
+
+        try {
+            $notificationService->notifyRequested($appointment);
+        } catch (\Throwable $e) {
+            report($e);
         }
 
         return redirect()->route('appointments.create')
@@ -138,6 +147,7 @@ class AppointmentController extends Controller
             'patient_first_name' => $this->normalizeWhitespace((string) $request->input('patient_first_name', '')),
             'patient_last_name' => $this->normalizeWhitespace((string) $request->input('patient_last_name', '')),
             'phone' => $this->normalizeWhitespace((string) $request->input('phone', '')),
+            'patient_email' => $this->normalizeEmail((string) $request->input('patient_email', '')),
             'dni' => $this->normalizeDni((string) $request->input('dni', '')),
         ]);
     }
@@ -154,5 +164,12 @@ class AppointmentController extends Controller
         $normalized = preg_replace('/\D+/', '', $value);
 
         return $normalized ?? '';
+    }
+
+    private function normalizeEmail(string $value): ?string
+    {
+        $normalized = strtolower(trim($value));
+
+        return $normalized === '' ? null : $normalized;
     }
 }

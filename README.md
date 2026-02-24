@@ -35,6 +35,7 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
    - Por defecto `.env.example` usa SQLite. Para usar MySQL, descomenta y configura `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
    - Configura `ADMIN_EMAIL`, `ADMIN_PASSWORD` y `DOCTOR_DEFAULT_PASSWORD` para los usuarios creados por seeders.
    - Para WhatsApp configura `TWILIO_WHATSAPP_ENABLED`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_FROM`.
+   - Para notificaciones automáticas de turnos usa: `APPOINTMENT_NOTIFICATIONS_ENABLED`, `APPOINTMENT_NOTIFICATIONS_EMAIL_ENABLED`, `APPOINTMENT_NOTIFICATIONS_WHATSAPP_ENABLED`.
 
 4. Migraciones y seeders (si aplica)
    ```bash
@@ -69,9 +70,14 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
 - Validaciones de paciente:
   - DNI: solo numérico (7 a 10 dígitos).
   - Teléfono: 7 a 20 caracteres válidos (`+`, dígitos, espacios, guiones y paréntesis).
+  - Email: opcional para envío automático de notificaciones por correo.
 - Transiciones en recepción:
   - Asistencia: solo desde estado `requested`.
   - Pago: solo desde `requested` o `arrived`.
+- Notificaciones automáticas:
+  - Al crear turno (`requested`) se intenta enviar por email y/o WhatsApp según datos disponibles.
+  - Al confirmar asistencia (`arrived`) y pago (`paid`) se vuelve a notificar.
+  - Los envíos se registran con estado y detalle en `appointment_notification_logs`.
 
 ## Accesos iniciales (seeders)
 

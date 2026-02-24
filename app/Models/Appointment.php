@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Appointment extends Model
 {
@@ -33,6 +34,7 @@ class Appointment extends Model
         'patient_first_name',
         'patient_last_name',
         'phone',
+        'patient_email',
         'dni',
         'specialty_id',
         'doctor_id',
@@ -52,6 +54,11 @@ class Appointment extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function notificationLogs(): HasMany
+    {
+        return $this->hasMany(AppointmentNotificationLog::class);
     }
 
     public function getStatusLabelAttribute(): string
