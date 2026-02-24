@@ -33,24 +33,16 @@
           <td>{{ $a->doctor->specialty->name }}</td>
           <td>{{ $a->doctor->name }}</td>
           <td>
-            @php
-              $badge = [
-                'requested' => 'secondary',
-                'arrived' => 'warning',
-                'paid' => 'success',
-                'completed' => 'info',
-              ][$a->status] ?? 'secondary';
-            @endphp
-            <span class="badge text-bg-{{ $badge }}">{{ ucfirst($a->status) }}</span>
+            <span class="badge text-bg-{{ $a->status_badge_class }}">{{ $a->status_label }}</span>
           </td>
           <td class="d-flex gap-2">
-            @if($a->status === 'requested')
+            @if($a->canMarkArrived())
               <form method="POST" action="{{ route('reception.arrived', $a) }}">
                 @csrf
                 <button class="btn btn-sm btn-warning" type="submit">Confirmar asistencia</button>
               </form>
             @endif
-            @if(in_array($a->status, ['requested', 'arrived']))
+            @if($a->canMarkPaid())
               <form method="POST" action="{{ route('reception.paid', $a) }}">
                 @csrf
                 <button class="btn btn-sm btn-success" type="submit">Confirmar pago</button>

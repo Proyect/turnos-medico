@@ -87,9 +87,21 @@ class AuthController extends Controller
                 ->withInput($request->except('password'));
         }
 
+        $doctor = Doctor::query()
+            ->whereKey((int) $request->doctor_id)
+            ->where('active', true)
+            ->first();
+
+        if (!$doctor) {
+            return back()
+                ->withErrors(['doctor_id' => 'El médico seleccionado ya no está disponible.'])
+                ->withInput($request->except('password'));
+        }
+
         $this->startRoleSession($request, [
             'role' => 'doctor',
-            'doctor_id' => (int) $request->doctor_id,
+            'doctor_id' => $doctor->id,
+            'doctor_name' => $doctor->name,
         ]);
         RateLimiter::clear($throttleKey);
 
@@ -106,7 +118,7 @@ class AuthController extends Controller
     private function startRoleSession(Request $request, array $sessionData): void
     {
         $request->session()->regenerate();
-        $request->session()->forget(['role', 'doctor_id']);
+        $request->session()->forget(['role', 'doctor_id', 'doctor_name']);
         $request->session()->put($sessionData);
     }
 

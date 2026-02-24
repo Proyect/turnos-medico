@@ -10,6 +10,25 @@ class Appointment extends Model
 {
     use HasFactory;
 
+    public const STATUS_REQUESTED = 'requested';
+    public const STATUS_ARRIVED = 'arrived';
+    public const STATUS_PAID = 'paid';
+    public const STATUS_COMPLETED = 'completed';
+
+    private const STATUS_LABELS = [
+        self::STATUS_REQUESTED => 'Solicitado',
+        self::STATUS_ARRIVED => 'Asistio',
+        self::STATUS_PAID => 'Pagado',
+        self::STATUS_COMPLETED => 'Completado',
+    ];
+
+    private const STATUS_BADGES = [
+        self::STATUS_REQUESTED => 'secondary',
+        self::STATUS_ARRIVED => 'warning',
+        self::STATUS_PAID => 'success',
+        self::STATUS_COMPLETED => 'info',
+    ];
+
     protected $fillable = [
         'patient_first_name',
         'patient_last_name',
@@ -33,5 +52,25 @@ class Appointment extends Model
     public function doctor(): BelongsTo
     {
         return $this->belongsTo(Doctor::class);
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function getStatusBadgeClassAttribute(): string
+    {
+        return self::STATUS_BADGES[$this->status] ?? 'secondary';
+    }
+
+    public function canMarkArrived(): bool
+    {
+        return $this->status === self::STATUS_REQUESTED;
+    }
+
+    public function canMarkPaid(): bool
+    {
+        return in_array($this->status, [self::STATUS_REQUESTED, self::STATUS_ARRIVED], true);
     }
 }

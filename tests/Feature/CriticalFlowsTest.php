@@ -62,6 +62,54 @@ class CriticalFlowsTest extends TestCase
         $this->assertDatabaseCount('appointments', 0);
     }
 
+    public function test_cannot_create_appointment_with_invalid_dni_format(): void
+    {
+        $specialty = Specialty::create(['name' => 'Cardiologia']);
+        $doctor = Doctor::create([
+            'name' => 'Dr. DNI Test',
+            'specialty_id' => $specialty->id,
+            'active' => true,
+        ]);
+
+        $response = $this->post(route('appointments.store'), [
+            'patient_first_name' => 'Elena',
+            'patient_last_name' => 'Dni',
+            'phone' => '11111111',
+            'dni' => '12A34',
+            'specialty_id' => $specialty->id,
+            'doctor_id' => $doctor->id,
+            'date' => now()->addDay()->format('Y-m-d'),
+            'time' => '10:00',
+        ]);
+
+        $response->assertSessionHasErrors('dni');
+        $this->assertDatabaseCount('appointments', 0);
+    }
+
+    public function test_cannot_create_appointment_with_invalid_phone_format(): void
+    {
+        $specialty = Specialty::create(['name' => 'Pediatria']);
+        $doctor = Doctor::create([
+            'name' => 'Dra. Telefono Test',
+            'specialty_id' => $specialty->id,
+            'active' => true,
+        ]);
+
+        $response = $this->post(route('appointments.store'), [
+            'patient_first_name' => 'Mario',
+            'patient_last_name' => 'Telefono',
+            'phone' => 'abc',
+            'dni' => '12345678',
+            'specialty_id' => $specialty->id,
+            'doctor_id' => $doctor->id,
+            'date' => now()->addDay()->format('Y-m-d'),
+            'time' => '10:00',
+        ]);
+
+        $response->assertSessionHasErrors('phone');
+        $this->assertDatabaseCount('appointments', 0);
+    }
+
     public function test_cannot_create_duplicate_slot_for_same_doctor_and_datetime(): void
     {
         $specialty = Specialty::create(['name' => 'Dermatologia']);
@@ -168,6 +216,30 @@ class CriticalFlowsTest extends TestCase
         ]);
 
         $response->assertSessionHasErrors('doctor_id');
+    }
+
+    public function test_login_medico_stores_doctor_name_in_session(): void
+    {
+        RateLimiter::clear('role-login:medico:127.0.0.1');
+
+        $specialty = Specialty::create(['name' => 'Clinica']);
+        $doctor = Doctor::create([
+            'name' => 'Dra. Sesion Nombre',
+            'specialty_id' => $specialty->id,
+            'active' => true,
+        ]);
+
+        config()->set('auth.role_passwords.doctor', 'secret');
+
+        $response = $this->post(route('login.perform', 'medico'), [
+            'doctor_id' => $doctor->id,
+            'password' => 'secret',
+        ]);
+
+        $response->assertRedirect(route('doctor.index'));
+        $response->assertSessionHas('role', 'doctor');
+        $response->assertSessionHas('doctor_id', $doctor->id);
+        $response->assertSessionHas('doctor_name', $doctor->name);
     }
 
     public function test_login_admin_fails_when_password_is_not_configured(): void

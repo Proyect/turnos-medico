@@ -21,11 +21,13 @@ class AppointmentController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->normalizeInputForValidation($request);
+
         $data = $request->validate([
-            'patient_first_name' => ['required','string','max:100'],
-            'patient_last_name'  => ['required','string','max:100'],
-            'phone'              => ['required','string','max:50'],
-            'dni'                => ['required','string','max:20'],
+            'patient_first_name' => ['required', 'string', 'max:100', 'regex:/^[\pL\s\'-]+$/u'],
+            'patient_last_name'  => ['required', 'string', 'max:100', 'regex:/^[\pL\s\'-]+$/u'],
+            'phone'              => ['required', 'string', 'max:20', 'regex:/^\+?[0-9\s\-\(\)]{7,20}$/'],
+            'dni'                => ['required', 'string', 'regex:/^\d{7,10}$/'],
             'specialty_id'       => ['required','exists:specialties,id'],
             'doctor_id'          => ['required','exists:doctors,id'],
             'date'               => ['required','date_format:Y-m-d'],
@@ -62,6 +64,12 @@ class AppointmentController extends Controller
                 ->withInput();
         }
 
+        if ($scheduledAt->minute % 15 !== 0) {
+            return back()
+                ->withErrors(['time' => 'La hora debe estar en intervalos de 15 minutos.'])
+                ->withInput();
+        }
+
         // Validación: evitar turnos superpuestos por médico en la misma fecha y hora
         $exists = Appointment::where('doctor_id', $doctor->id)
             ->where('scheduled_at', $scheduledAt->format('Y-m-d H:i:s'))
@@ -82,7 +90,7 @@ class AppointmentController extends Controller
                 'specialty_id'       => $data['specialty_id'],
                 'doctor_id'          => $doctor->id,
                 'scheduled_at'       => $scheduledAt,
-                'status'             => 'requested',
+                'status'             => Appointment::STATUS_REQUESTED,
             ]);
         } catch (QueryException $e) {
             if (!$this->isUniqueAppointmentConstraintViolation($e)) {
@@ -122,5 +130,29 @@ class AppointmentController extends Controller
             || (str_contains($message, 'appointments.doctor_id') && str_contains($message, 'appointments.scheduled_at'));
 
         return $isUniqueCode && $hasAppointmentUniqueHint;
+    }
+
+    private function normalizeInputForValidation(Request $request): void
+    {
+        $request->merge([
+            'patient_first_name' => $this->normalizeWhitespace((string) $request->input('patient_first_name', '')),
+            'patient_last_name' => $this->normalizeWhitespace((string) $request->input('patient_last_name', '')),
+            'phone' => $this->normalizeWhitespace((string) $request->input('phone', '')),
+            'dni' => $this->normalizeDni((string) $request->input('dni', '')),
+        ]);
+    }
+
+    private function normalizeWhitespace(string $value): string
+    {
+        $normalized = preg_replace('/\s+/u', ' ', trim($value));
+
+        return $normalized ?? trim($value);
+    }
+
+    private function normalizeDni(string $value): string
+    {
+        $normalized = preg_replace('/\D+/', '', $value);
+
+        return $normalized ?? '';
     }
 }

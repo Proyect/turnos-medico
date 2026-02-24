@@ -35,7 +35,9 @@
             </form>
           </li>
         @elseif(session('role')==='doctor')
-          <li class="nav-item"><span class="navbar-text me-2">Conectado: Médico #{{ session('doctor_id') }}</span></li>
+          <li class="nav-item">
+            <span class="navbar-text me-2">Conectado: {{ session('doctor_name', 'Médico #'.session('doctor_id')) }}</span>
+          </li>
           <li class="nav-item">
             <form method="POST" action="{{ route('logout') }}">
               @csrf

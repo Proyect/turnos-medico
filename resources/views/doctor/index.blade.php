@@ -29,21 +29,15 @@
       </tr>
     </thead>
     <tbody>
-      @forelse($appointments->sortByDesc(fn($a) => $a->status === 'paid')->values() as $a)
-        <tr class="{{ $a->status === 'paid' ? 'table-success' : '' }}">
+      @forelse($appointments as $a)
+        <tr class="{{ $a->status === \App\Models\Appointment::STATUS_PAID ? 'table-success' : '' }}">
           <td>{{ $a->scheduled_at->format('H:i') }}</td>
           <td>{{ $a->patient_last_name }}, {{ $a->patient_first_name }}</td>
           <td>{{ $a->dni }}</td>
           <td>{{ $a->phone }}</td>
           <td>{{ $a->specialty->name }}</td>
           <td>
-            @php
-              $badge = [
-                'arrived' => 'warning',
-                'paid' => 'success',
-              ][$a->status] ?? 'secondary';
-            @endphp
-            <span class="badge text-bg-{{ $badge }}">{{ ucfirst($a->status) }}</span>
+            <span class="badge text-bg-{{ $a->status_badge_class }}">{{ $a->status_label }}</span>
           </td>
         </tr>
       @empty
