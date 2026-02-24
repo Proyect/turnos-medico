@@ -33,6 +33,7 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
    php artisan key:generate
    ```
    - Por defecto `.env.example` usa SQLite. Para usar MySQL, descomenta y configura `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+   - Configura también `ADMIN_PASS` y `DOCTOR_PASS` para habilitar los accesos por rol.
 
 4. Migraciones y seeders (si aplica)
    ```bash
@@ -60,6 +61,18 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
 - Vistas Blade: `resources/views/`
 - Migraciones: `database/migrations/`
 
+## Reglas funcionales vigentes
+
+- Los turnos no se permiten en fechas/horas pasadas.
+- Los horarios de turnos se validan en intervalos de 15 minutos.
+- `doctor_id` debe pertenecer a la `specialty_id` elegida y estar activo.
+- Validaciones de paciente:
+  - DNI: solo numérico (7 a 10 dígitos).
+  - Teléfono: 7 a 20 caracteres válidos (`+`, dígitos, espacios, guiones y paréntesis).
+- Transiciones en recepción:
+  - Asistencia: solo desde estado `requested`.
+  - Pago: solo desde `requested` o `arrived`.
+
 ## CI/CD
 
 Se incluye un workflow de GitHub Actions para ejecutar pruebas en cada push/PR. Ver `.github/workflows/laravel-ci.yml`.
@@ -68,6 +81,7 @@ Se incluye un workflow de GitHub Actions para ejecutar pruebas en cada push/PR. 
 
 - Nunca subas el archivo `.env` (está ignorado por `.gitignore`).
 - Revisa y personaliza `.env.example` para documentar variables necesarias sin exponer secretos.
+- Las credenciales `ADMIN_PASS` y `DOCTOR_PASS` no tienen valor por defecto: deben definirse explícitamente en cada entorno.
 
 ## Licencia
 

@@ -32,8 +32,11 @@ class DoctorController extends Controller
             $appointments = Appointment::with(['doctor', 'specialty'])
                 ->where('doctor_id', $doctorId)
                 ->whereDate('scheduled_at', $date)
-                ->whereIn('status', ['paid', 'arrived']) // doctor sees arrived and paid; prioritize paid in UI
-                ->orderBy('status') // arrived first or paid first depending; we'll sort paid first later in view
+                ->whereIn('status', [Appointment::STATUS_PAID, Appointment::STATUS_ARRIVED])
+                ->orderByRaw(
+                    'CASE WHEN status = ? THEN 0 WHEN status = ? THEN 1 ELSE 2 END',
+                    [Appointment::STATUS_PAID, Appointment::STATUS_ARRIVED]
+                )
                 ->orderBy('scheduled_at')
                 ->get();
         }

@@ -5,9 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Centro Médico del Milagro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ asset('css/clinic-ui.css') }}" rel="stylesheet">
 </head>
-<body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+<body class="app-body">
+<nav class="navbar navbar-expand-lg navbar-dark app-navbar mb-4">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="/">
       <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="currentColor" class="bi bi-hospital" viewBox="0 0 16 16" role="img" aria-label="Logo">
@@ -21,9 +22,15 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNav">
       <ul class="navbar-nav">
-        <li class="nav-item"><a class="nav-link" href="/paciente">Paciente</a></li>
-        <li class="nav-item"><a class="nav-link" href="/admin">Administrador</a></li>
-        <li class="nav-item"><a class="nav-link" href="/medico">Médico</a></li>
+        <li class="nav-item">
+          <a class="nav-link {{ request()->is('paciente*') ? 'is-active' : '' }}" href="/paciente">Paciente</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ request()->is('admin*') ? 'is-active' : '' }}" href="/admin">Administrador</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link {{ request()->is('medico*') ? 'is-active' : '' }}" href="/medico">Médico</a>
+        </li>
       </ul>
       <ul class="navbar-nav ms-auto">
         @if(session('role')==='admin')
@@ -35,7 +42,9 @@
             </form>
           </li>
         @elseif(session('role')==='doctor')
-          <li class="nav-item"><span class="navbar-text me-2">Conectado: Médico #{{ session('doctor_id') }}</span></li>
+          <li class="nav-item">
+            <span class="navbar-text me-2">Conectado: {{ session('doctor_name', 'Médico #'.session('doctor_id')) }}</span>
+          </li>
           <li class="nav-item">
             <form method="POST" action="{{ route('logout') }}">
               @csrf
@@ -43,19 +52,19 @@
             </form>
           </li>
         @else
-          <li class="nav-item"><a class="nav-link" href="/login/admin">Login Admin</a></li>
-          <li class="nav-item"><a class="nav-link" href="/login/medico">Login Médico</a></li>
+          <li class="nav-item"><a class="nav-link {{ request()->is('login/admin') ? 'is-active' : '' }}" href="/login/admin">Login Admin</a></li>
+          <li class="nav-item"><a class="nav-link {{ request()->is('login/medico') ? 'is-active' : '' }}" href="/login/medico">Login Médico</a></li>
         @endif
       </ul>
     </div>
   </div>
 </nav>
-<div class="container">
+<main class="container app-shell">
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success app-alert shadow-sm">{{ session('success') }}</div>
     @endif
     @if($errors->any())
-        <div class="alert alert-danger">
+        <div class="alert alert-danger app-alert shadow-sm">
             <ul class="mb-0">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -66,7 +75,7 @@
 
     {{ $slot ?? '' }}
     @yield('content')
-</div>
+</main>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 @stack('scripts')
 </body>

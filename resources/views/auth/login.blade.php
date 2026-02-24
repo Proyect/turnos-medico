@@ -1,11 +1,28 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="row">
-  <div class="col-12 col-md-6 mx-auto">
-    <div class="card">
+<div class="row g-4 align-items-stretch">
+  <div class="col-12 col-lg-5">
+    <div class="panel-card h-100 p-4">
+      <h5 class="mb-3">Acceso {{ $role === 'admin' ? 'Administrador' : 'Médico' }}</h5>
+      <p class="muted-help mb-3">
+        @if($role === 'admin')
+          Desde este panel podés controlar asistencia y cobros diarios.
+        @else
+          Ingresá para visualizar tus pacientes y su estado del día.
+        @endif
+      </p>
+      <ul class="small ps-3 mb-0">
+        <li class="mb-2">Sesión segura con regeneración de credenciales de sesión.</li>
+        <li class="mb-2">Control de intentos para prevenir fuerza bruta.</li>
+        <li>Usa credenciales definidas en variables de entorno.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="col-12 col-lg-7">
+    <div class="card panel-card h-100">
       <div class="card-header">Iniciar sesión - {{ $role === 'admin' ? 'Administrador' : 'Médico' }}</div>
-      <div class="card-body">
+      <div class="card-body p-4">
         <form method="POST" action="{{ route('login.perform', $role) }}">
           @csrf
           @if($role === 'medico')
@@ -24,9 +41,9 @@
             <input type="password" name="password" class="form-control" required>
             <div class="form-text">
               @if($role==='admin')
-                Usar la variable .env ADMIN_PASS (por defecto: admin123)
+                Definir la variable ADMIN_PASS en el archivo .env.
               @else
-                Usar la variable .env DOCTOR_PASS (por defecto: doctor123)
+                Definir la variable DOCTOR_PASS en el archivo .env.
               @endif
             </div>
           </div>

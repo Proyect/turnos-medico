@@ -23,13 +23,25 @@ class ReceptionController extends Controller
 
     public function markArrived(Appointment $appointment): RedirectResponse
     {
-        $appointment->update(['status' => 'arrived']);
+        if (!$appointment->canMarkArrived()) {
+            return back()->withErrors([
+                'status' => "No se puede confirmar asistencia para un turno en estado {$appointment->status_label}.",
+            ]);
+        }
+
+        $appointment->update(['status' => Appointment::STATUS_ARRIVED]);
         return back()->with('success', 'Asistencia confirmada.');
     }
 
     public function markPaid(Appointment $appointment): RedirectResponse
     {
-        $appointment->update(['status' => 'paid']);
+        if (!$appointment->canMarkPaid()) {
+            return back()->withErrors([
+                'status' => "No se puede confirmar pago para un turno en estado {$appointment->status_label}.",
+            ]);
+        }
+
+        $appointment->update(['status' => Appointment::STATUS_PAID]);
         return back()->with('success', 'Pago confirmado.');
     }
 }

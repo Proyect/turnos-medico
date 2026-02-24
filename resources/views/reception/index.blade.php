@@ -1,16 +1,47 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h5>Recepción - Turnos del día</h5>
-  <form method="GET" action="{{ route('reception.index') }}" class="d-flex align-items-center gap-2">
-    <input type="date" name="date" class="form-control" value="{{ $date }}">
-    <button class="btn btn-outline-primary" type="submit">Ver</button>
-  </form>
+@php
+  $requestedCount = $appointments->where('status', \App\Models\Appointment::STATUS_REQUESTED)->count();
+  $arrivedCount = $appointments->where('status', \App\Models\Appointment::STATUS_ARRIVED)->count();
+  $paidCount = $appointments->where('status', \App\Models\Appointment::STATUS_PAID)->count();
+@endphp
+
+<div class="toolbar-card mb-4">
+  <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3">
+    <div>
+      <h5 class="mb-1">Recepción - Turnos del día</h5>
+      <p class="mb-0 muted-help">Gestioná asistencia y pagos con visibilidad del estado en tiempo real.</p>
+    </div>
+    <form method="GET" action="{{ route('reception.index') }}" class="d-flex form-inline-stack align-items-center gap-2">
+      <input type="date" name="date" class="form-control" value="{{ $date }}">
+      <button class="btn btn-primary" type="submit">Actualizar</button>
+    </form>
+  </div>
+
+  <div class="stats-grid mt-3">
+    <div class="stat-card">
+      <div class="stat-label">Turnos del día</div>
+      <div class="stat-value">{{ $appointments->count() }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pendientes de llegada</div>
+      <div class="stat-value">{{ $requestedCount }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Asistencias confirmadas</div>
+      <div class="stat-value">{{ $arrivedCount }}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Pagos confirmados</div>
+      <div class="stat-value">{{ $paidCount }}</div>
+    </div>
+  </div>
 </div>
 
-<div class="table-responsive">
-  <table class="table table-striped align-middle">
+<div class="table-panel">
+  <div class="table-responsive">
+  <table class="table align-middle">
     <thead>
       <tr>
         <th>Hora</th>
@@ -33,27 +64,19 @@
           <td>{{ $a->doctor->specialty->name }}</td>
           <td>{{ $a->doctor->name }}</td>
           <td>
-            @php
-              $badge = [
-                'requested' => 'secondary',
-                'arrived' => 'warning',
-                'paid' => 'success',
-                'completed' => 'info',
-              ][$a->status] ?? 'secondary';
-            @endphp
-            <span class="badge text-bg-{{ $badge }}">{{ ucfirst($a->status) }}</span>
+            <span class="badge text-bg-{{ $a->status_badge_class }}">{{ $a->status_label }}</span>
           </td>
-          <td class="d-flex gap-2">
-            @if($a->status === 'requested')
+          <td class="d-flex gap-2 flex-wrap">
+            @if($a->canMarkArrived())
               <form method="POST" action="{{ route('reception.arrived', $a) }}">
                 @csrf
-                <button class="btn btn-sm btn-warning" type="submit">Confirmar asistencia</button>
+                <button class="btn btn-sm btn-warning" type="submit">Asistencia</button>
               </form>
             @endif
-            @if(in_array($a->status, ['requested', 'arrived']))
+            @if($a->canMarkPaid())
               <form method="POST" action="{{ route('reception.paid', $a) }}">
                 @csrf
-                <button class="btn btn-sm btn-success" type="submit">Confirmar pago</button>
+                <button class="btn btn-sm btn-success" type="submit">Pago</button>
               </form>
             @endif
           </td>
@@ -65,5 +88,6 @@
       @endforelse
     </tbody>
   </table>
+  </div>
 </div>
 @endsection

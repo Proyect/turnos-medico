@@ -101,6 +101,36 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Role Access Passwords (temporary auth model)
+    |--------------------------------------------------------------------------
+    |
+    | Mientras no se migre a usuarios reales, se utilizan contraseñas por rol.
+    | Deben definirse en .env y no tienen valores por defecto por seguridad.
+    |
+    */
+
+    'role_passwords' => [
+        'admin' => env('ADMIN_PASS'),
+        'doctor' => env('DOCTOR_PASS'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Role Login Rate Limits
+    |--------------------------------------------------------------------------
+    |
+    | Limita intentos fallidos de login por rol + IP para reducir ataques de
+    | fuerza bruta en el modelo de autenticación temporal.
+    |
+    */
+
+    'rate_limits' => [
+        'role_login_attempts' => (int) env('ROLE_LOGIN_MAX_ATTEMPTS', 5),
+        'role_login_decay_seconds' => (int) env('ROLE_LOGIN_DECAY_SECONDS', 60),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
