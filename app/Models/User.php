@@ -26,6 +26,7 @@ class User extends Authenticatable
         'email',
         'role',
         'doctor_id',
+        'active',
         'password',
     ];
 
@@ -48,6 +49,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'active' => 'boolean',
             'password' => 'hashed',
         ];
     }

@@ -13,7 +13,13 @@ class EnsureDoctor
     {
         $user = Auth::user();
 
-        if (!$user || !$user->isDoctor()) {
+        if (!$user || !$user->isDoctor() || !$user->active) {
+            if ($user && !$user->active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
             return redirect()->to('/login/medico')->withErrors(['auth' => 'Debes iniciar sesión como Médico.']);
         }
 

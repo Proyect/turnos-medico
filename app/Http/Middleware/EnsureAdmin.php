@@ -11,7 +11,15 @@ class EnsureAdmin
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!Auth::check() || !Auth::user()?->isAdmin()) {
+        $user = Auth::user();
+
+        if (!$user || !$user->isAdmin() || !$user->active) {
+            if ($user && !$user->active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+            }
+
             return redirect()->to('/login/admin')->withErrors(['auth' => 'Debes iniciar sesión como Administrador.']);
         }
 

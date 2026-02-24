@@ -215,6 +215,7 @@ class CriticalFlowsTest extends TestCase
             'email' => 'inactivo.medico@example.com',
             'role' => User::ROLE_DOCTOR,
             'doctor_id' => $inactiveDoctor->id,
+            'active' => true,
             'password' => 'secret',
         ]);
 
@@ -241,6 +242,7 @@ class CriticalFlowsTest extends TestCase
             'email' => 'sesion.medico@example.com',
             'role' => User::ROLE_DOCTOR,
             'doctor_id' => $doctor->id,
+            'active' => true,
             'password' => 'secret',
         ]);
 
@@ -260,6 +262,7 @@ class CriticalFlowsTest extends TestCase
             'email' => 'admin@example.com',
             'role' => User::ROLE_ADMIN,
             'doctor_id' => null,
+            'active' => true,
             'password' => 'admin-secret',
         ]);
         RateLimiter::clear("role-login:admin:{$admin->email}:127.0.0.1");
@@ -280,6 +283,7 @@ class CriticalFlowsTest extends TestCase
             'email' => 'admin@example.com',
             'role' => User::ROLE_ADMIN,
             'doctor_id' => null,
+            'active' => true,
             'password' => 'admin-secret',
         ]);
         RateLimiter::clear("role-login:admin:{$admin->email}:127.0.0.1");
@@ -321,6 +325,7 @@ class CriticalFlowsTest extends TestCase
             'email' => $email,
             'role' => User::ROLE_ADMIN,
             'doctor_id' => null,
+            'active' => true,
             'password' => 'admin-secret',
         ]);
     }

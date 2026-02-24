@@ -80,6 +80,9 @@ Aplicación Laravel para gestionar turnos médicos: registro de usuarios, agenda
 - Se crea un usuario por cada médico activo con:
   - Clave: `DOCTOR_DEFAULT_PASSWORD`
   - Selección por médico en `/login/medico`
+- Gestión de usuarios desde UI:
+  - Ruta: `/admin/users` (solo administradores)
+  - Permite crear, editar, activar y desactivar cuentas.
 
 ## CI/CD
 

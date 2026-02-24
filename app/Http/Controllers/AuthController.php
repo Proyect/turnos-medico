@@ -21,11 +21,11 @@ class AuthController extends Controller
         if (Auth::check()) {
             $user = Auth::user();
 
-            if ($user?->isAdmin()) {
+            if ($user?->isAdmin() && $user->active) {
                 return redirect()->route('reception.index');
             }
 
-            if ($user?->isDoctor()) {
+            if ($user?->isDoctor() && $user->active && $user->doctor?->active) {
                 return redirect()->route('doctor.index');
             }
 
@@ -36,7 +36,13 @@ class AuthController extends Controller
 
         $doctors = collect();
         if ($role === 'medico') {
-            $doctors = Doctor::where('active', true)->orderBy('name')->get(['id','name']);
+            $doctors = Doctor::query()
+                ->where('active', true)
+                ->whereHas('user', function ($query): void {
+                    $query->where('role', User::ROLE_DOCTOR)->where('active', true);
+                })
+                ->orderBy('name')
+                ->get(['id', 'name']);
         }
         return view('auth.login', compact('role', 'doctors'));
     }
@@ -64,6 +70,7 @@ class AuthController extends Controller
 
             $user = User::query()
                 ->where('role', User::ROLE_ADMIN)
+                ->where('active', true)
                 ->whereRaw('LOWER(email) = ?', [strtolower($credentials['email'])])
                 ->first();
 
@@ -98,6 +105,7 @@ class AuthController extends Controller
 
         if (
             !$user
+            || !$user->active
             || !$user->doctor
             || !$user->doctor->active
             || !Hash::check($credentials['password'], $user->password)

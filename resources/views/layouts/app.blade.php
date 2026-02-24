@@ -29,6 +29,11 @@
         <li class="nav-item">
           <a class="nav-link {{ request()->is('admin*') ? 'is-active' : '' }}" href="/admin">Administrador</a>
         </li>
+        @if($authUser && $authUser->isAdmin())
+          <li class="nav-item">
+            <a class="nav-link {{ request()->is('admin/users*') ? 'is-active' : '' }}" href="{{ route('admin.users.index') }}">Usuarios</a>
+          </li>
+        @endif
         <li class="nav-item">
           <a class="nav-link {{ request()->is('medico*') ? 'is-active' : '' }}" href="/medico">Médico</a>
         </li>

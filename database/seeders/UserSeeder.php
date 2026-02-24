@@ -22,6 +22,7 @@ class UserSeeder extends Seeder
                 'name' => 'Administrador',
                 'role' => User::ROLE_ADMIN,
                 'doctor_id' => null,
+                'active' => true,
                 'password' => Hash::make($adminPassword),
             ]
         );
@@ -39,6 +40,7 @@ class UserSeeder extends Seeder
                         'name' => $doctor->name,
                         'email' => $email,
                         'role' => User::ROLE_DOCTOR,
+                        'active' => true,
                     ])->save();
 
                     return;
@@ -49,6 +51,7 @@ class UserSeeder extends Seeder
                     'email' => $email,
                     'role' => User::ROLE_DOCTOR,
                     'doctor_id' => $doctor->id,
+                    'active' => true,
                     'password' => Hash::make($doctorPassword),
                 ]);
             });

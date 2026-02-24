@@ -13,10 +13,13 @@
       <h5 class="mb-1">Recepción - Turnos del día</h5>
       <p class="mb-0 muted-help">Gestioná asistencia y pagos con visibilidad del estado en tiempo real.</p>
     </div>
-    <form method="GET" action="{{ route('reception.index') }}" class="d-flex form-inline-stack align-items-center gap-2">
-      <input type="date" name="date" class="form-control" value="{{ $date }}">
-      <button class="btn btn-primary" type="submit">Actualizar</button>
-    </form>
+    <div class="d-flex form-inline-stack align-items-center gap-2">
+      <form method="GET" action="{{ route('reception.index') }}" class="d-flex form-inline-stack align-items-center gap-2">
+        <input type="date" name="date" class="form-control" value="{{ $date }}">
+        <button class="btn btn-primary" type="submit">Actualizar</button>
+      </form>
+      <a href="{{ route('admin.users.index') }}" class="btn btn-soft">Usuarios</a>
+    </div>
   </div>
 
   <div class="stats-grid mt-3">
